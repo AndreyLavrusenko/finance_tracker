@@ -1,4 +1,4 @@
-import { IsIn, IsString, Length, Matches } from 'class-validator';
+import { IsIn, IsString, Length } from 'class-validator';
 
 export class CreateCategoryDto {
     @IsString()
@@ -7,8 +7,4 @@ export class CreateCategoryDto {
 
     @IsIn(['income', 'expense'])
     type: 'income' | 'expense';
-
-    @IsString()
-    @Matches(/^[1-9]\d*$/)
-    userId: string;
 }

@@ -14,8 +14,4 @@ export class CreateAccountDto {
     @IsString()
     @Matches(/^[1-9]\d*$/)
     currencyId: string;
-
-    @IsString()
-    @Matches(/^[1-9]\d*$/)
-    userId: string;
 }

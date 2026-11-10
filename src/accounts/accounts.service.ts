@@ -13,8 +13,8 @@ import { PatchAccountDto } from './dto/patch-account.dto';
 export class AccountsService {
     constructor(private readonly prismaService: PrismaService) {}
 
-    async create(dto: CreateAccountDto) {
-        const { name, type, currencyId, userId } = dto;
+    async create(userId: string, dto: CreateAccountDto) {
+        const { name, type, currencyId } = dto;
 
         try {
             return await this.prismaService.accounts.create({
@@ -55,10 +55,11 @@ export class AccountsService {
         });
     }
 
-    async findOne(accountId: string) {
+    async findOne(userId: string, accountId: string) {
         const account = await this.prismaService.accounts.findUnique({
             where: {
                 id: BigInt(accountId),
+                user_id: BigInt(userId),
             },
         });
 
@@ -69,7 +70,7 @@ export class AccountsService {
         return account;
     }
 
-    async update(accountId: string, dto: PatchAccountDto) {
+    async update(userId: string, accountId: string, dto: PatchAccountDto) {
         if (Object.keys(dto).length === 0) {
             throw new BadRequestException(
                 'Укажите хотя бы одно поле для обновления',
@@ -80,6 +81,7 @@ export class AccountsService {
             return await this.prismaService.accounts.update({
                 where: {
                     id: BigInt(accountId),
+                    user_id: BigInt(userId),
                 },
                 data: dto,
             });
@@ -95,11 +97,12 @@ export class AccountsService {
         }
     }
 
-    async delete(accountId: string) {
+    async delete(userId: string, accountId: string) {
         try {
             return await this.prismaService.accounts.delete({
                 where: {
                     id: BigInt(accountId),
+                    user_id: BigInt(userId),
                 },
             });
         } catch (error) {

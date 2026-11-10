@@ -13,9 +13,9 @@ import { PatchCategoryDto } from './dto/patch-category.dto';
 export class CategoriesService {
     constructor(private readonly prismaService: PrismaService) {}
 
-    async create(dto: CreateCategoryDto) {
+    async create(userId: string, dto: CreateCategoryDto) {
         try {
-            const { name, type, userId } = dto;
+            const { name, type } = dto;
             return await this.prismaService.categories.create({
                 data: {
                     name,
@@ -51,10 +51,11 @@ export class CategoriesService {
         });
     }
 
-    async findCategory(categoryId: string) {
+    async findCategory(userId: string, categoryId: string) {
         const category = await this.prismaService.categories.findUnique({
             where: {
                 id: BigInt(categoryId),
+                user_id: BigInt(userId),
             },
         });
 
@@ -65,7 +66,11 @@ export class CategoriesService {
         return category;
     }
 
-    async updateCategory(categoryId: string, dto: PatchCategoryDto) {
+    async updateCategory(
+        userId: string,
+        categoryId: string,
+        dto: PatchCategoryDto,
+    ) {
         if (Object.keys(dto).length === 0) {
             throw new BadRequestException(
                 'Укажите хотя бы одно поле для обновления',
@@ -76,6 +81,7 @@ export class CategoriesService {
             return await this.prismaService.categories.update({
                 where: {
                     id: BigInt(categoryId),
+                    user_id: BigInt(userId),
                 },
                 data: dto,
             });
@@ -91,11 +97,12 @@ export class CategoriesService {
         }
     }
 
-    async delete(categoryId: string) {
+    async delete(userId: string, categoryId: string) {
         try {
             return await this.prismaService.categories.delete({
                 where: {
                     id: BigInt(categoryId),
+                    user_id: BigInt(userId),
                 },
             });
         } catch (error) {
