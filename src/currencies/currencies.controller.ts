@@ -3,10 +3,10 @@ import { CurrenciesService } from './currencies.service';
 
 @Controller('currencies')
 export class CurrenciesController {
-  constructor(private readonly currenciesService: CurrenciesService) {}
+    constructor(private readonly currenciesService: CurrenciesService) {}
 
-  @Get()
-  async findAll() {
-    return await this.currenciesService.findAll();
-  }
+    @Get()
+    async findAll() {
+        return await this.currenciesService.findAll();
+    }
 }
