@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model accounts {
+  id                                            BigInt         @id @default(autoincrement())
+  user_id                                       BigInt
+  currency_id                                   BigInt
+  name                                          String         @db.VarChar(100)
+  type                                          String         @db.VarChar(20)
+  balance                                       Decimal        @default(0) @db.Decimal(14, 2)
+  created_at                                    DateTime       @default(now()) @db.Timestamptz(6)
+  currencies                                    currencies     @relation(fields: [currency_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                                         users          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactions                                  transactions[]
+  transfers_transfers_from_account_idToaccounts transfers[]    @relation("transfers_from_account_idToaccounts")
+  transfers_transfers_to_account_idToaccounts   transfers[]    @relation("transfers_to_account_idToaccounts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model categories {
+  id           BigInt         @id @default(autoincrement())
+  user_id      BigInt
+  name         String         @db.VarChar(100)
+  type         String         @db.VarChar(20)
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  users        users          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactions transactions[]
+
+  @@unique([user_id, name])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model currencies {
+  id             BigInt     @id @default(autoincrement())
+  code           String     @unique @db.Char(3)
+  name           String     @db.VarChar(50)
+  symbol         String     @db.VarChar(5)
+  decimal_places Int        @default(2) @db.SmallInt
+  accounts       accounts[]
+  users          users[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactions {
+  id               BigInt     @id @default(autoincrement())
+  account_id       BigInt
+  category_id      BigInt
+  amount           Decimal    @db.Decimal(14, 2)
+  type             String     @db.VarChar(20)
+  description      String?
+  transaction_date DateTime   @default(now()) @db.Timestamptz(6)
+  created_at       DateTime   @default(now()) @db.Timestamptz(6)
+  accounts         accounts   @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categories       categories @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transfers {
+  id                                           BigInt   @id @default(autoincrement())
+  from_account_id                              BigInt
+  to_account_id                                BigInt
+  amount_from                                  Decimal  @db.Decimal(14, 2)
+  amount_to                                    Decimal  @db.Decimal(14, 2)
+  description                                  String?
+  created_at                                   DateTime @default(now()) @db.Timestamptz(6)
+  accounts_transfers_from_account_idToaccounts accounts @relation("transfers_from_account_idToaccounts", fields: [from_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  accounts_transfers_to_account_idToaccounts   accounts @relation("transfers_to_account_idToaccounts", fields: [to_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id               BigInt       @id @default(autoincrement())
+  email            String       @unique @db.VarChar(255)
+  password_hash    String       @db.VarChar(255)
+  name             String       @db.VarChar(50)
+  base_currency_id BigInt
+  created_at       DateTime     @default(now()) @db.Timestamptz(6)
+  accounts         accounts[]
+  categories       categories[]
+  currencies       currencies   @relation(fields: [base_currency_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
