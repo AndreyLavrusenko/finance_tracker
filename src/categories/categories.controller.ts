@@ -12,9 +12,9 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { PositiveBigIntPipe } from '../common/pipes/positive-bigint.pipe';
 import { PatchCategoryDto } from './dto/patch-category.dto';
-import { AuthUser, CurrentUser, MockAuthGuard } from '../auth';
+import { AuthUser, CurrentUser, JwtAuthGuard } from '../auth';
 
-@UseGuards(MockAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {
     constructor(private readonly categoriesService: CategoriesService) {}

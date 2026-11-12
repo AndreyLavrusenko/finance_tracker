@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CurrenciesService } from './currencies.service';
+import { PositiveBigIntPipe } from '../common/pipes/positive-bigint.pipe';
 
 @Controller('currencies')
 export class CurrenciesController {
@@ -8,5 +9,10 @@ export class CurrenciesController {
     @Get()
     async findAll() {
         return await this.currenciesService.findAll();
+    }
+
+    @Get(':id')
+    findUnique(@Param('id', PositiveBigIntPipe) id: string) {
+        return this.currenciesService.findUnique(id);
     }
 }

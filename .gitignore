@@ -16,6 +16,7 @@ lerna-debug.log*
 
 #Data
 .env
+backup.dump
 
 # Tests
 /coverage

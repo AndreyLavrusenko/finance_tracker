@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -11,5 +11,17 @@ export class CurrenciesService {
                 code: 'desc',
             },
         });
+    }
+
+    findUnique(currencyId: string) {
+        try {
+            return this.prismaService.currencies.findUnique({
+                where: {
+                    id: BigInt(currencyId),
+                },
+            });
+        } catch (error) {
+            throw new NotFoundException('Указананя валюта не найдена');
+        }
     }
 }

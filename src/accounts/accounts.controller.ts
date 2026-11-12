@@ -12,9 +12,9 @@ import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { PatchAccountDto } from './dto/patch-account.dto';
 import { PositiveBigIntPipe } from '../common/pipes/positive-bigint.pipe';
-import { AuthUser, CurrentUser, MockAuthGuard } from '../auth';
+import { AuthUser, CurrentUser, JwtAuthGuard } from '../auth';
 
-@UseGuards(MockAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('accounts')
 export class AccountsController {
     constructor(private readonly accountsService: AccountsService) {}
