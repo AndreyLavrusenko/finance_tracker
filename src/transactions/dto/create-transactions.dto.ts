@@ -11,6 +11,10 @@ import {
 export class CreateTransactionsDto {
     @IsString()
     @Matches(/^[1-9]\d*$/)
+    accountId: string;
+
+    @IsString()
+    @Matches(/^[1-9]\d*$/)
     categoryId: string;
 
     @IsNumber({ maxDecimalPlaces: 2 })
