@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
 import { PatchTransactionsDto } from './dto/patch-transactions.dto';
+import { GetTransactionsDto } from './dto/get-transactions.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -46,15 +47,15 @@ export class TransactionsService {
         });
     }
 
-    async getAllTransactions(userId: string) {
-        return this.prismaService.transactions.findMany({
-            where: {
-                accounts: {
-                    is: {
-                        user_id: BigInt(userId),
-                    },
-                },
-            },
+    async getAllTransactions(userId: string, filters: GetTransactionsDto) {
+        const take = filters.limit ?? 10;
+
+        const where = this.buildTransactionsWhere(userId, filters);
+
+        const data = await this.prismaService.transactions.findMany({
+            where,
+            skip: filters.page ? (filters.page - 1) * take : undefined,
+            take: filters.page ? take : undefined,
             select: {
                 id: true,
                 amount: true,
@@ -80,6 +81,18 @@ export class TransactionsService {
                 transaction_date: 'desc',
             },
         });
+
+        const total = await this.prismaService.transactions.count({ where });
+
+        return {
+            data,
+            meta: {
+                total,
+                page: filters.page ?? 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            },
+        };
     }
 
     async getTransactionById(
@@ -315,5 +328,45 @@ export class TransactionsService {
                 throw new BadRequestException('Недостаточно средств на счёте');
             }
         }
+    }
+
+    private buildTransactionsWhere(
+        userId: string,
+        filters: GetTransactionsDto,
+    ): Prisma.transactionsWhereInput {
+        const where: Prisma.transactionsWhereInput = {
+            accounts: {
+                is: {
+                    user_id: BigInt(userId),
+                },
+            },
+        };
+
+        if (filters.type) {
+            where.type = filters.type;
+        }
+
+        if (filters.accountId) {
+            where.account_id = BigInt(filters.accountId);
+        }
+
+        if (filters.categoryId) {
+            where.category_id = BigInt(filters.categoryId);
+        }
+
+        if (filters.dateFrom || filters.dateTo) {
+            const dateTo = filters.dateTo
+                ? new Date(filters.dateTo)
+                : undefined;
+
+            dateTo?.setDate(dateTo.getDate() + 1);
+
+            where.transaction_date = {
+                gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+                lt: dateTo,
+            };
+        }
+
+        return where;
     }
 }
