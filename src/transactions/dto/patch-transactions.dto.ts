@@ -8,7 +8,7 @@ import {
     Min,
 } from 'class-validator';
 
-export class PatchTransactions {
+export class PatchTransactionsDto {
     @IsOptional()
     @IsString()
     @Matches(/^[1-9]\d*$/)

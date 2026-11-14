@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
+import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -38,6 +39,7 @@ export class TransactionsService {
                 userId,
                 amount: dto.amount,
                 type: dto.type,
+                operation: 'apply',
             });
 
             return transaction;
@@ -45,7 +47,7 @@ export class TransactionsService {
     }
 
     async getAllTransactions(userId: string) {
-        return await this.prismaService.transactions.findMany({
+        return this.prismaService.transactions.findMany({
             where: {
                 accounts: {
                     is: {
@@ -80,6 +82,155 @@ export class TransactionsService {
         });
     }
 
+    async getTransactionById(
+        userId: string,
+        transactionId: string,
+        tx: Prisma.TransactionClient = this.prismaService,
+    ) {
+        const transaction = await tx.transactions.findFirst({
+            where: {
+                accounts: {
+                    is: {
+                        user_id: BigInt(userId),
+                    },
+                },
+                id: BigInt(transactionId),
+            },
+            select: {
+                id: true,
+                amount: true,
+                type: true,
+                description: true,
+                transaction_date: true,
+                accounts: {
+                    select: {
+                        id: true,
+                        name: true,
+                        type: true,
+                    },
+                },
+                categories: {
+                    select: {
+                        id: true,
+                        name: true,
+                        type: true,
+                    },
+                },
+            },
+        });
+
+        if (!transaction) {
+            throw new NotFoundException('Операция не найдена');
+        }
+
+        return transaction;
+    }
+
+    async editTransaction(
+        userId: string,
+        transactionId: string,
+        dto: PatchTransactionsDto,
+    ) {
+        return await this.prismaService.$transaction(async (tx) => {
+            const prevTransaction = await this.getTransactionById(
+                userId,
+                transactionId,
+                tx,
+            );
+
+            const previousType = this.assertTransactionType(
+                prevTransaction.type,
+            );
+
+            const newType = dto.type ?? previousType;
+            const newCategoryId = dto.categoryId
+                ? BigInt(dto.categoryId)
+                : prevTransaction.categories.id;
+
+            const category = await this.findUserCategory(
+                userId,
+                newCategoryId.toString(),
+                tx,
+            );
+
+            if (newType !== category.type) {
+                throw new BadRequestException(
+                    'Тип транзакции не соответствует типу категории',
+                );
+            }
+
+            const newAmount = dto.amount ?? prevTransaction.amount;
+            const newDescription =
+                dto.description ?? prevTransaction.description;
+
+            await this.updateAccountBalance(tx, {
+                accountId: prevTransaction.accounts.id,
+                userId,
+                amount: prevTransaction.amount,
+                type: previousType,
+                operation: 'revert',
+            });
+
+            await this.updateAccountBalance(tx, {
+                accountId: prevTransaction.accounts.id,
+                userId,
+                amount: newAmount,
+                type: newType,
+                operation: 'apply',
+            });
+
+            const transaction = await tx.transactions.update({
+                where: {
+                    id: BigInt(transactionId),
+                },
+                data: {
+                    category_id: BigInt(category.id),
+                    amount: newAmount,
+                    type: category.type,
+                    description: newDescription,
+                },
+            });
+
+            return transaction;
+        });
+    }
+
+    async deleteTransaction(userId: string, transactionId: string) {
+        return await this.prismaService.$transaction(async (tx) => {
+            const prevTransaction = await this.getTransactionById(
+                userId,
+                transactionId,
+                tx,
+            );
+
+            const previousType = this.assertTransactionType(
+                prevTransaction.type,
+            );
+
+            await this.updateAccountBalance(tx, {
+                accountId: prevTransaction.accounts.id,
+                userId,
+                amount: prevTransaction.amount,
+                type: previousType,
+                operation: 'revert',
+            });
+
+            await tx.transactions.delete({
+                where: {
+                    id: BigInt(transactionId),
+                },
+            });
+        });
+    }
+
+    private assertTransactionType(type: string): 'income' | 'expense' {
+        if (type === 'income' || type === 'expense') {
+            return type;
+        }
+
+        throw new BadRequestException('Неизвестный тип транзакции');
+    }
+
     private async findUserAccount(userId: string, accountId: string) {
         const account = await this.prismaService.accounts.findFirst({
             where: {
@@ -97,8 +248,12 @@ export class TransactionsService {
         return account;
     }
 
-    private async findUserCategory(userId: string, categoryId: string) {
-        const category = await this.prismaService.categories.findFirst({
+    private async findUserCategory(
+        userId: string,
+        categoryId: string,
+        tx: Prisma.TransactionClient = this.prismaService,
+    ) {
+        const category = await tx.categories.findFirst({
             where: {
                 user_id: BigInt(userId),
                 id: BigInt(categoryId),
@@ -117,13 +272,30 @@ export class TransactionsService {
         params: {
             accountId: bigint;
             userId: string;
-            amount: number;
+            amount: number | Prisma.Decimal;
             type: 'income' | 'expense';
+            operation: 'apply' | 'revert';
         },
     ) {
-        const { accountId, userId, amount, type } = params;
+        const { accountId, userId, amount, type, operation } = params;
 
-        if (type === 'expense') {
+        const shouldIncrease =
+            (operation === 'apply' && type === 'income') ||
+            (operation === 'revert' && type === 'expense');
+
+        if (shouldIncrease) {
+            await tx.accounts.update({
+                where: {
+                    id: BigInt(accountId),
+                    user_id: BigInt(userId),
+                },
+                data: {
+                    balance: {
+                        increment: amount,
+                    },
+                },
+            });
+        } else {
             const result = await tx.accounts.updateMany({
                 where: {
                     id: BigInt(accountId),
@@ -142,18 +314,6 @@ export class TransactionsService {
             if (result.count === 0) {
                 throw new BadRequestException('Недостаточно средств на счёте');
             }
-        } else {
-            await tx.accounts.update({
-                where: {
-                    id: BigInt(accountId),
-                    user_id: BigInt(userId),
-                },
-                data: {
-                    balance: {
-                        increment: amount,
-                    },
-                },
-            });
         }
     }
 }
