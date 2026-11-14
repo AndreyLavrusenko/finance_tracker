@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
 import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
+import { StatisticTransactionsDto } from './dto/statistic-transactions.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -234,6 +235,82 @@ export class TransactionsService {
                 },
             });
         });
+    }
+
+    async getTransactionStatistics(
+        userId: string,
+        dto: StatisticTransactionsDto,
+    ) {
+        const groupStats = await this.prismaService.transactions.groupBy({
+            by: ['type'],
+            _sum: {
+                amount: true,
+            },
+            where: this.buildTransactionsWhere(userId, dto),
+        });
+
+        const income = groupStats.find((group) => group.type === 'income');
+        const expense = groupStats.find((group) => group.type === 'expense');
+
+        const incomeAmount = income?._sum.amount ?? 0;
+        const expenseAmount = expense?._sum.amount ?? 0;
+
+        return {
+            income: incomeAmount,
+            expense: expenseAmount,
+            difference: new Prisma.Decimal(incomeAmount).minus(
+                new Prisma.Decimal(expenseAmount),
+            ),
+        };
+    }
+
+    async getTransactionStatisticsByCategories(
+        userId: string,
+        dto: StatisticTransactionsDto,
+    ) {
+        const groupStats = await this.prismaService.transactions.groupBy({
+            by: ['type', 'category_id'],
+            _sum: {
+                amount: true,
+            },
+            where: this.buildTransactionsWhere(userId, dto),
+        });
+
+        const categoryIds = groupStats.map((item) => item.category_id);
+
+        const categoryNames = await this.prismaService.categories.findMany({
+            where: {
+                id: {
+                    in: categoryIds,
+                },
+                user_id: BigInt(userId),
+            },
+            select: {
+                id: true,
+                name: true,
+            },
+        });
+
+        const categoryIdsList = categoryNames.reduce((acc, current) => {
+            if (!acc[String(current.id)]) {
+                acc[String(current.id)] = current.name;
+            }
+
+            return acc;
+        }, {});
+
+        const result = groupStats.map((item) => {
+            return {
+                type: item.type,
+                categoryId: item.category_id,
+                categoryName:
+                    categoryIdsList[String(item.category_id)] ??
+                    'Неизвестная категория',
+                amount: item._sum.amount ?? 0,
+            };
+        });
+
+        return result;
     }
 
     private assertTransactionType(type: string): 'income' | 'expense' {

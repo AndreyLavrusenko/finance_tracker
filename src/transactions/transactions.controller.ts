@@ -13,6 +13,7 @@ import { AuthUser, CurrentUser, JwtAuthGuard } from '../auth';
 import { CreateTransactionsDto } from './dto/create-transactions.dto';
 import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
+import { StatisticTransactionsDto } from './dto/statistic-transactions.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
@@ -38,6 +39,28 @@ export class TransactionsController {
         );
     }
 
+    @Get('/statistics')
+    async getTransactionStatistics(
+        @CurrentUser() user: AuthUser,
+        @Body() dto: StatisticTransactionsDto,
+    ) {
+        return await this.transactionsService.getTransactionStatistics(
+            user.id,
+            dto,
+        );
+    }
+
+    @Get('/statistics/categories')
+    async getTransactionStatisticsByCategories(
+        @CurrentUser() user: AuthUser,
+        @Body() dto: StatisticTransactionsDto,
+    ) {
+        return await this.transactionsService.getTransactionStatisticsByCategories(
+            user.id,
+            dto,
+        );
+    }
+
     @Get(':transactionId')
     async getTransactionById(
         @CurrentUser() user: AuthUser,
@@ -54,4 +77,6 @@ export class TransactionsController {
     ) {
         return await this.transactionsService.editTransaction(user.id, id, dto);
     }
+
+    //TODO: Delete method
 }
