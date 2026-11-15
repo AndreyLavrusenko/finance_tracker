@@ -268,21 +268,103 @@ export class TransactionsService {
         userId: string,
         dto: StatisticTransactionsDto,
     ) {
-        const groupStats = await this.prismaService.transactions.groupBy({
-            by: ['type', 'category_id'],
+        const expensesByCategory = await this.sumExpensesByCategory(
+            userId,
+            dto,
+        );
+        const categoryNames = await this.findCategoryNames(
+            userId,
+            expensesByCategory.map((item) => item.category_id),
+        );
+
+        return this.toCategoryStatistics(expensesByCategory, categoryNames);
+    }
+
+    async getTransactionStatisticsByMonths(
+        userId: string,
+        dto: StatisticTransactionsDto,
+    ) {
+        const currentYear = new Date().getFullYear();
+
+        const dateFrom = dto.dateFrom
+            ? new Date(dto.dateFrom)
+            : new Date(`${currentYear}-01-01`);
+        const dateTo = dto.dateTo
+            ? new Date(dto.dateTo)
+            : new Date(`${currentYear}-12-31`);
+        const accountId = dto.accountId ? BigInt(dto.accountId) : null;
+
+        const dateConditions = Prisma.sql`
+            ${
+                dateFrom
+                    ? Prisma.sql`AND t.transaction_date >= ${dateFrom}::date`
+                    : Prisma.empty
+            }
+            ${
+                dateTo
+                    ? Prisma.sql`AND t.transaction_date < ${dateTo}::date`
+                    : Prisma.empty
+            }
+            ${
+                accountId
+                    ? Prisma.sql`AND t.account_id = ${BigInt(accountId)}`
+                    : Prisma.empty
+            }
+        `;
+
+        return this.prismaService.$queryRaw`
+            with months as (
+                SELECT generate_series(
+                    DATE_TRUNC('month', ${dateFrom}::date),
+                    DATE_TRUNC('month', ${dateTo}::date),
+                    INTERVAL '1 month'
+                ) as month
+            )
+            select 
+                COALESCE(SUM(case when t.type = 'income' then t.amount else 0 end),0) as income,
+                COALESCE(sum(case when t.type = 'expense' then t.amount else 0 end),0) as expense,
+                COALESCE(SUM(case when t.type = 'income' then t.amount else 0 end) 
+                -
+                sum(case when t.type = 'expense' then t.amount else 0 end),0) as difference,
+                m.month
+            from months m
+            left join transactions t 
+                on DATE_TRUNC('month', t.transaction_date) = m.month 
+                and exists
+                (
+                    select 1 from accounts a
+                    where a.id = t.account_id and a.user_id = ${BigInt(userId)}
+                )
+            ${dateConditions}
+            group by m.month
+            order by m.month
+        `;
+    }
+
+    private sumExpensesByCategory(
+        userId: string,
+        dto: StatisticTransactionsDto,
+    ) {
+        return this.prismaService.transactions.groupBy({
+            by: ['category_id'],
             _sum: {
                 amount: true,
             },
-            where: this.buildTransactionsWhere(userId, dto),
-        });
-
-        const categoryIds = groupStats.map((item) => item.category_id);
-
-        const categoryNames = await this.prismaService.categories.findMany({
             where: {
-                id: {
-                    in: categoryIds,
-                },
+                ...this.buildTransactionsWhere(userId, dto),
+                type: 'expense',
+            },
+        });
+    }
+
+    private async findCategoryNames(userId: string, categoryIds: bigint[]) {
+        if (categoryIds.length === 0) {
+            return new Map<string, string>();
+        }
+
+        const categories = await this.prismaService.categories.findMany({
+            where: {
+                id: { in: categoryIds },
                 user_id: BigInt(userId),
             },
             select: {
@@ -291,26 +373,44 @@ export class TransactionsService {
             },
         });
 
-        const categoryIdsList = categoryNames.reduce((acc, current) => {
-            if (!acc[String(current.id)]) {
-                acc[String(current.id)] = current.name;
-            }
+        return new Map(
+            categories.map((category) => [
+                category.id.toString(),
+                category.name,
+            ]),
+        );
+    }
 
-            return acc;
-        }, {});
+    private toCategoryStatistics(
+        expensesByCategory: Awaited<
+            ReturnType<TransactionsService['sumExpensesByCategory']>
+        >,
+        categoryNames: Map<string, string>,
+    ) {
+        const total = expensesByCategory.reduce(
+            (sum, item) => sum.plus(item._sum.amount ?? 0),
+            new Prisma.Decimal(0),
+        );
 
-        const result = groupStats.map((item) => {
+        return expensesByCategory.map((item) => {
+            const amount = new Prisma.Decimal(item._sum.amount ?? 0);
+
             return {
-                type: item.type,
-                categoryId: item.category_id,
                 categoryName:
-                    categoryIdsList[String(item.category_id)] ??
+                    categoryNames.get(item.category_id.toString()) ??
                     'Неизвестная категория',
-                amount: item._sum.amount ?? 0,
+                amount,
+                percentage: this.expenseShare(amount, total),
             };
         });
+    }
 
-        return result;
+    private expenseShare(amount: Prisma.Decimal, total: Prisma.Decimal) {
+        if (total.isZero()) {
+            return 0;
+        }
+
+        return amount.div(total).mul(100).toDecimalPlaces(0).toNumber();
     }
 
     private assertTransactionType(type: string): 'income' | 'expense' {

@@ -61,6 +61,17 @@ export class TransactionsController {
         );
     }
 
+    @Get('/statistics/months')
+    async getTransactionStatisticsByMonths(
+        @CurrentUser() user: AuthUser,
+        @Body() dto: StatisticTransactionsDto,
+    ) {
+        return await this.transactionsService.getTransactionStatisticsByMonths(
+            user.id,
+            dto,
+        );
+    }
+
     @Get(':transactionId')
     async getTransactionById(
         @CurrentUser() user: AuthUser,
