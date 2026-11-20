@@ -3,6 +3,24 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["<rootDir>/setup-env.ts"],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^@nestjs/common/(.*)\\.js$": "@nestjs/common/$1"
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(@nestjs/config|@nestjs/jwt|@nestjs/passport|@nestjs/mapped-types)/)"
+  ],
+  "globals": {
+    "ts-jest": {
+      "isolatedModules": true,
+      "tsconfig": {
+        "allowJs": true,
+        "esModuleInterop": true,
+        "module": "commonjs"
+      }
+    }
+  },
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   }
