@@ -9,6 +9,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { UserModule } from './user/user.module';
         CategoriesModule,
         AuthModule,
         UserModule,
+        ExchangeRateModule,
     ],
     controllers: [AppController],
     providers: [AppService],
