@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, INestApplication } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionsService } from '../src/transactions/transactions.service';
-import { Decimal } from '@prisma/client/runtime/client';
 
 describe('Transactions integration', () => {
     let app: INestApplication;
@@ -327,15 +326,17 @@ describe('Transactions integration', () => {
 
         expect(transaction).toBeDefined();
 
-        await expect(service.editTransaction(
-            userId.toString(),
-            transaction.id.toString(),
-            {
-                categoryId: categoryExpenseId.toString(),
-                type: 'expense',
-                amount: 1200,
-            },
-        )).rejects.toThrow('Недостаточно средств на счёте');
+        await expect(
+            service.editTransaction(
+                userId.toString(),
+                transaction.id.toString(),
+                {
+                    categoryId: categoryExpenseId.toString(),
+                    type: 'expense',
+                    amount: 1200,
+                },
+            ),
+        ).rejects.toThrow('Недостаточно средств на счёте');
 
         const account = await prisma.accounts.findUnique({
             where: { id: accountId },
@@ -371,7 +372,10 @@ describe('Transactions integration', () => {
 
         expect(transaction).toBeDefined();
 
-        await service.deleteTransaction(userId.toString(), transaction.id.toString());
+        await service.deleteTransaction(
+            userId.toString(),
+            transaction.id.toString(),
+        );
 
         const transactionsCount = await prisma.transactions.count({
             where: { account_id: accountId },
@@ -382,16 +386,14 @@ describe('Transactions integration', () => {
         const deletedTransaction = await prisma.transactions.findUnique({
             where: { id: transaction.id },
         });
-        
+
         expect(deletedTransaction).toBeNull();
 
         const account = await prisma.accounts.findUnique({
             where: { id: accountId },
         });
 
-        expect(account.balance.toString()).toBe(
-            String(accountDefaultBalance),
-        );
+        expect(account.balance.toString()).toBe(String(accountDefaultBalance));
     });
 
     it('test delete expense transaction', async () => {
@@ -405,7 +407,10 @@ describe('Transactions integration', () => {
 
         expect(transaction).toBeDefined();
 
-        await service.deleteTransaction(userId.toString(), transaction.id.toString());
+        await service.deleteTransaction(
+            userId.toString(),
+            transaction.id.toString(),
+        );
 
         const transactionsCount = await prisma.transactions.count({
             where: { account_id: accountId },
@@ -416,15 +421,13 @@ describe('Transactions integration', () => {
         const deletedTransaction = await prisma.transactions.findUnique({
             where: { id: transaction.id },
         });
-        
+
         expect(deletedTransaction).toBeNull();
 
         const account = await prisma.accounts.findUnique({
             where: { id: accountId },
         });
 
-        expect(account.balance.toString()).toBe(
-            String(accountDefaultBalance),
-        );
-    })
+        expect(account.balance.toString()).toBe(String(accountDefaultBalance));
+    });
 });

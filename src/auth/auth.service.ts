@@ -188,6 +188,23 @@ export class AuthService {
         });
     }
 
+    async getMe(userId: string) {
+        const user = await this.prismaService.users.findUnique({
+            where: {
+                id: BigInt(userId),
+            },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('Пользователь не найден');
+        }
+
+        return {
+            id: user.id,
+            email: user.email,
+        };
+    }
+
     private async generateTokens(
         user: AuthUser,
         tx: Prisma.TransactionClient = this.prismaService,
