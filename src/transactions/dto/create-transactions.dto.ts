@@ -1,5 +1,5 @@
 import {
-    IsIn,
+    IsEnum,
     IsNumber,
     IsOptional,
     IsString,
@@ -7,6 +7,7 @@ import {
     MaxLength,
     Min,
 } from 'class-validator';
+import { TransactionType } from '../../common';
 
 export class CreateTransactionsDto {
     @IsString()
@@ -21,8 +22,8 @@ export class CreateTransactionsDto {
     @Min(0.01)
     amount: number;
 
-    @IsIn(['income', 'expense'])
-    type: 'income' | 'expense';
+    @IsEnum(TransactionType)
+    type: TransactionType;
 
     @IsOptional()
     @IsString()

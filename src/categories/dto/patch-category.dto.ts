@@ -1,4 +1,5 @@
-import { IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import { TransactionType } from '../../common';
 
 export class PatchCategoryDto {
     @IsOptional()
@@ -7,6 +8,6 @@ export class PatchCategoryDto {
     name?: string;
 
     @IsOptional()
-    @IsIn(['income', 'expense'])
-    type?: 'income' | 'expense';
+    @IsEnum(TransactionType)
+    type?: TransactionType;
 }

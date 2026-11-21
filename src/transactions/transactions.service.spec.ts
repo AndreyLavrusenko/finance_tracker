@@ -10,6 +10,7 @@ import {
     prismaMock,
 } from './mock';
 import { Prisma } from '../generated/prisma/client';
+import { TransactionType } from '../common';
 
 jest.mock('@nestjs/config', () => ({
     ConfigService: class ConfigService {},
@@ -55,7 +56,7 @@ describe('TransactionsService', () => {
             accountId: '1',
             categoryId: '1',
             amount: 200,
-            type: 'expense',
+            type: TransactionType.EXPENSE,
         });
 
         expect(prismaMock.transactions.create).toHaveBeenCalled();
@@ -65,7 +66,7 @@ describe('TransactionsService', () => {
                 account_id: BigInt(1),
                 category_id: BigInt(1),
                 amount: 200,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
                 description: null,
             },
         });
@@ -98,7 +99,7 @@ describe('TransactionsService', () => {
                 accountId: '1',
                 categoryId: '1',
                 amount: 200,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
             }),
         ).rejects.toThrow('Недостаточно средств на счёте');
 
@@ -113,7 +114,7 @@ describe('TransactionsService', () => {
                 accountId: '1',
                 categoryId: '1',
                 amount: 200,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
             }),
         ).rejects.toThrow(NotFoundException);
     });
@@ -127,7 +128,7 @@ describe('TransactionsService', () => {
                 accountId: '1',
                 categoryId: '1',
                 amount: 200,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
             }),
         ).rejects.toThrow(NotFoundException);
     });
@@ -143,7 +144,7 @@ describe('TransactionsService', () => {
                 accountId: '1',
                 categoryId: '1',
                 amount: 200,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
             }),
         ).rejects.toThrow(BadRequestException);
     });
@@ -161,7 +162,7 @@ describe('TransactionsService', () => {
             accountId: '1',
             categoryId: '1',
             amount: 200,
-            type: 'income',
+            type: TransactionType.INCOME,
         });
 
         expect(prismaMock.transactions.create).toHaveBeenCalledTimes(1);
@@ -170,7 +171,7 @@ describe('TransactionsService', () => {
                 account_id: BigInt(1),
                 category_id: BigInt(1),
                 amount: 200,
-                type: 'income',
+                type: TransactionType.INCOME,
                 description: null,
             },
         });
@@ -260,10 +261,10 @@ describe('TransactionsService', () => {
         const updatedTransaction = {
             ...mockPreviousTransaction,
             amount: new Prisma.Decimal(300),
-            type: 'income',
+            type: TransactionType.INCOME,
             categories: {
                 ...mockPreviousTransaction.categories,
-                type: 'income',
+                type: TransactionType.INCOME,
             },
         };
 
@@ -271,7 +272,7 @@ describe('TransactionsService', () => {
 
         const result = await service.editTransaction('1', '1', {
             amount: 300,
-            type: 'income',
+            type: TransactionType.INCOME,
             categoryId: '2',
         });
 
@@ -302,10 +303,10 @@ describe('TransactionsService', () => {
         expect(result).toEqual({
             ...mockPreviousTransaction,
             amount: new Prisma.Decimal(300),
-            type: 'income',
+            type: TransactionType.INCOME,
             categories: {
                 ...mockPreviousTransaction.categories,
-                type: 'income',
+                type: TransactionType.INCOME,
             },
         });
     });
@@ -321,7 +322,7 @@ describe('TransactionsService', () => {
 
         await expect(
             service.editTransaction('1', '1', {
-                type: 'income',
+                type: TransactionType.INCOME,
             }),
         ).rejects.toThrow(BadRequestException);
 
@@ -378,7 +379,7 @@ describe('TransactionsService', () => {
     it('should delete an income transaction', async () => {
         prismaMock.transactions.findFirst.mockResolvedValue({
             ...mockPreviousTransaction,
-            type: 'income',
+            type: TransactionType.INCOME,
         });
 
         prismaMock.accounts.updateMany.mockResolvedValue({ count: 1 });

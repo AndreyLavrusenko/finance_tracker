@@ -1,5 +1,5 @@
 import {
-    IsIn,
+    IsEnum,
     IsNumber,
     IsOptional,
     IsString,
@@ -7,6 +7,7 @@ import {
     MaxLength,
     Min,
 } from 'class-validator';
+import { TransactionType } from '../../common';
 
 export class PatchTransactionsDto {
     @IsOptional()
@@ -20,8 +21,8 @@ export class PatchTransactionsDto {
     amount?: number;
 
     @IsOptional()
-    @IsIn(['income', 'expense'])
-    type?: 'income' | 'expense';
+    @IsEnum(TransactionType)
+    type?: TransactionType;
 
     @IsOptional()
     @IsString()

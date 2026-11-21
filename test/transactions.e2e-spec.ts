@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionsService } from '../src/transactions/transactions.service';
+import { TransactionType } from '../src/common';
 
 describe('Transactions integration', () => {
     let app: INestApplication;
@@ -67,7 +68,7 @@ describe('Transactions integration', () => {
             data: {
                 user_id: userId,
                 name: 'Integration Test Expense',
-                type: 'expense',
+                type: TransactionType.EXPENSE,
             },
         });
 
@@ -75,7 +76,7 @@ describe('Transactions integration', () => {
             data: {
                 user_id: userId,
                 name: 'Integration Test Income',
-                type: 'income',
+                type: TransactionType.INCOME,
             },
         });
 
@@ -148,7 +149,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryExpenseId.toString(),
             amount: 200,
-            type: 'expense',
+            type: TransactionType.EXPENSE,
             description: 'Integration test expense',
         });
 
@@ -174,7 +175,7 @@ describe('Transactions integration', () => {
                 accountId: accountId.toString(),
                 categoryId: categoryExpenseId.toString(),
                 amount: accountDefaultBalance + 100,
-                type: 'expense',
+                type: TransactionType.EXPENSE,
                 description: 'Integration test expense',
             }),
         ).rejects.toThrow('Недостаточно средств на счёте');
@@ -197,7 +198,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryIncomeId.toString(),
             amount: 500,
-            type: 'income',
+            type: TransactionType.INCOME,
             description: 'Integration test income',
         });
 
@@ -231,7 +232,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryIncomeId.toString(),
             amount: 500,
-            type: 'income',
+            type: TransactionType.INCOME,
             description: 'Integration test income',
         });
 
@@ -274,7 +275,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryIncomeId.toString(),
             amount: 500,
-            type: 'income',
+            type: TransactionType.INCOME,
             description: 'Integration test income',
         });
 
@@ -285,7 +286,7 @@ describe('Transactions integration', () => {
             transaction.id.toString(),
             {
                 categoryId: categoryExpenseId.toString(),
-                type: 'expense',
+                type: TransactionType.EXPENSE,
                 amount: 900,
             },
         );
@@ -320,7 +321,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryIncomeId.toString(),
             amount: 500,
-            type: 'income',
+            type: TransactionType.INCOME,
             description: 'Integration test income',
         });
 
@@ -332,7 +333,7 @@ describe('Transactions integration', () => {
                 transaction.id.toString(),
                 {
                     categoryId: categoryExpenseId.toString(),
-                    type: 'expense',
+                    type: TransactionType.EXPENSE,
                     amount: 1200,
                 },
             ),
@@ -366,7 +367,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryIncomeId.toString(),
             amount: 500,
-            type: 'income',
+            type: TransactionType.INCOME,
             description: 'Integration test income',
         });
 
@@ -401,7 +402,7 @@ describe('Transactions integration', () => {
             accountId: accountId.toString(),
             categoryId: categoryExpenseId.toString(),
             amount: 500,
-            type: 'expense',
+            type: TransactionType.EXPENSE,
             description: 'Integration test expense',
         });
 

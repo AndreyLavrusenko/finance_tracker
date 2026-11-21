@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import {
-    IsIn,
     IsOptional,
     IsString,
     Matches,
@@ -8,7 +7,9 @@ import {
     IsInt,
     Min,
     Max,
+    IsEnum,
 } from 'class-validator';
+import { IsDateRangeValid, TransactionType } from '../../common';
 
 export class GetTransactionsDto {
     @IsOptional()
@@ -22,8 +23,8 @@ export class GetTransactionsDto {
     categoryId?: string;
 
     @IsOptional()
-    @IsIn(['income', 'expense'])
-    type?: 'income' | 'expense';
+    @IsEnum(TransactionType)
+    type?: TransactionType;
 
     @IsOptional()
     @IsDateString()
@@ -31,6 +32,7 @@ export class GetTransactionsDto {
 
     @IsOptional()
     @IsDateString()
+    @IsDateRangeValid('dateFrom')
     dateTo?: string;
 
     @IsOptional()

@@ -1,4 +1,5 @@
 import { IsDateString, IsOptional, IsString, Matches } from 'class-validator';
+import { IsDateRangeValid } from '../../common';
 
 export class StatisticTransactionsDto {
     @IsOptional()
@@ -12,5 +13,6 @@ export class StatisticTransactionsDto {
 
     @IsOptional()
     @IsDateString()
+    @IsDateRangeValid('dateFrom')
     dateTo?: string;
 }

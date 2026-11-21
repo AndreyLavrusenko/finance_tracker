@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TransactionType } from '../../common';
 
 export class TransactionAccountResponseDto {
     @ApiProperty({ example: '1' })
@@ -18,8 +19,8 @@ export class TransactionCategoryResponseDto {
     @ApiProperty({ example: 'Food' })
     name: string;
 
-    @ApiProperty({ example: 'expense', enum: ['income', 'expense'] })
-    type: 'income' | 'expense';
+    @ApiProperty({ example: 'expense', enum: TransactionType })
+    type: TransactionType;
 }
 
 export class TransactionViewResponseDto {
@@ -29,8 +30,8 @@ export class TransactionViewResponseDto {
     @ApiProperty({ example: '120.00' })
     amount: string;
 
-    @ApiProperty({ example: 'expense', enum: ['income', 'expense'] })
-    type: 'income' | 'expense';
+    @ApiProperty({ example: 'expense', enum: TransactionType })
+    type: TransactionType;
 
     @ApiProperty({ example: 'Groceries', nullable: true })
     description: string | null;

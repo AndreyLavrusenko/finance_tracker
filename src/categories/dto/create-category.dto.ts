@@ -1,10 +1,11 @@
-import { IsIn, IsString, Length } from 'class-validator';
+import { IsEnum, IsString, Length } from 'class-validator';
+import { TransactionType } from '../../common';
 
 export class CreateCategoryDto {
     @IsString()
     @Length(2, 100)
     name: string;
 
-    @IsIn(['income', 'expense'])
-    type: 'income' | 'expense';
+    @IsEnum(TransactionType)
+    type: TransactionType;
 }

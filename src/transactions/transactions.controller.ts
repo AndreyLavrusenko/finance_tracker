@@ -24,6 +24,7 @@ import {
     ApiGetTransactionStatistics,
     ApiUpdateTransaction,
 } from './decorators/api-transactions.decorator';
+import { PositiveBigIntPipe } from '../common/pipes/positive-bigint.pipe';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -92,7 +93,7 @@ export class TransactionsController {
     @Get(':transactionId')
     async getTransactionById(
         @CurrentUser() user: AuthUser,
-        @Param('transactionId') id: string,
+        @Param('transactionId', PositiveBigIntPipe) id: string,
     ) {
         return await this.transactionsService.getTransactionById(user.id, id);
     }
@@ -101,7 +102,7 @@ export class TransactionsController {
     @Patch(':transactionId')
     async editTransactionById(
         @CurrentUser() user: AuthUser,
-        @Param('transactionId') id: string,
+        @Param('transactionId', PositiveBigIntPipe) id: string,
         @Body() dto: PatchTransactionsDto,
     ) {
         return await this.transactionsService.editTransaction(user.id, id, dto);

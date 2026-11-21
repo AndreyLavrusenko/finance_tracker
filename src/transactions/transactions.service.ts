@@ -9,6 +9,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
 import { StatisticTransactionsDto } from './dto/statistic-transactions.dto';
+import { TransactionType } from '../common';
 
 @Injectable()
 export class TransactionsService {
@@ -413,8 +414,11 @@ export class TransactionsService {
         return amount.div(total).mul(100).toDecimalPlaces(0).toNumber();
     }
 
-    private assertTransactionType(type: string): 'income' | 'expense' {
-        if (type === 'income' || type === 'expense') {
+    private assertTransactionType(type: string): TransactionType {
+        if (
+            type === TransactionType.INCOME ||
+            type === TransactionType.EXPENSE
+        ) {
             return type;
         }
 
@@ -463,7 +467,7 @@ export class TransactionsService {
             accountId: bigint;
             userId: string;
             amount: number | Prisma.Decimal;
-            type: 'income' | 'expense';
+            type: TransactionType;
             operation: 'apply' | 'revert';
         },
     ) {
