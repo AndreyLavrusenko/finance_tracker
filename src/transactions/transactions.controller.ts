@@ -8,18 +8,30 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { AuthUser, CurrentUser, JwtAuthGuard } from '../auth';
 import { CreateTransactionsDto } from './dto/create-transactions.dto';
 import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
 import { StatisticTransactionsDto } from './dto/statistic-transactions.dto';
+import {
+    ApiCreateTransaction,
+    ApiGetCategoryStatistics,
+    ApiGetMonthStatistics,
+    ApiGetTransaction,
+    ApiGetTransactions,
+    ApiGetTransactionStatistics,
+    ApiUpdateTransaction,
+} from './decorators/api-transactions.decorator';
 
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionsController {
     constructor(private readonly transactionsService: TransactionsService) {}
 
+    @ApiCreateTransaction()
     @Post()
     async create(
         @CurrentUser() user: AuthUser,
@@ -28,6 +40,7 @@ export class TransactionsController {
         return await this.transactionsService.create(user.id, dto);
     }
 
+    @ApiGetTransactions()
     @Get()
     async getAllTransactions(
         @CurrentUser() user: AuthUser,
@@ -39,6 +52,7 @@ export class TransactionsController {
         );
     }
 
+    @ApiGetTransactionStatistics()
     @Get('/statistics')
     async getTransactionStatistics(
         @CurrentUser() user: AuthUser,
@@ -50,6 +64,7 @@ export class TransactionsController {
         );
     }
 
+    @ApiGetCategoryStatistics()
     @Get('/statistics/categories')
     async getTransactionStatisticsByCategories(
         @CurrentUser() user: AuthUser,
@@ -61,6 +76,7 @@ export class TransactionsController {
         );
     }
 
+    @ApiGetMonthStatistics()
     @Get('/statistics/months')
     async getTransactionStatisticsByMonths(
         @CurrentUser() user: AuthUser,
@@ -72,6 +88,7 @@ export class TransactionsController {
         );
     }
 
+    @ApiGetTransaction()
     @Get(':transactionId')
     async getTransactionById(
         @CurrentUser() user: AuthUser,
@@ -80,6 +97,7 @@ export class TransactionsController {
         return await this.transactionsService.getTransactionById(user.id, id);
     }
 
+    @ApiUpdateTransaction()
     @Patch(':transactionId')
     async editTransactionById(
         @CurrentUser() user: AuthUser,

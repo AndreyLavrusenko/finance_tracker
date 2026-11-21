@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 Object.defineProperty(BigInt.prototype, 'toJSON', {
     value(this: bigint) {
@@ -9,6 +10,21 @@ Object.defineProperty(BigInt.prototype, 'toJSON', {
     },
     configurable: true,
 });
+
+const setupSwagger = (app: INestApplication) => {
+    const config = new DocumentBuilder()
+        .setTitle('Finance Tracker API')
+        .setDescription('API documentation for Finance Tracker')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+
+    SwaggerModule.setup('api/docs', app, document, {
+        swaggerOptions: { persistAuthorization: true },
+    });
+};
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -22,6 +38,9 @@ async function bootstrap() {
     );
 
     const configService = app.get(ConfigService);
+
+    setupSwagger(app);
+
     await app.listen(configService.get<number>('APP_PORT', 3000));
 
     app.enableShutdownHooks();
