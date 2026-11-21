@@ -10,12 +10,14 @@ import { CategoriesModule } from './categories/categories.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        LoggerModule,
         PrismaModule,
         CurrenciesModule,
         AccountsModule,

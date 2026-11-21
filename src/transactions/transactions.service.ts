@@ -10,10 +10,16 @@ import { PatchTransactionsDto } from './dto/patch-transactions.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
 import { StatisticTransactionsDto } from './dto/statistic-transactions.dto';
 import { TransactionType } from '../common';
+import { AppLoggerService } from '../common/logger/app-logger.service';
 
 @Injectable()
 export class TransactionsService {
-    constructor(private readonly prismaService: PrismaService) {}
+    constructor(
+        private readonly prismaService: PrismaService,
+        private readonly loggerService: AppLoggerService,
+    ) {
+        this.loggerService.log('TransactionsService initialized');
+    }
 
     async create(userId: string, dto: CreateTransactionsDto) {
         const account = await this.findUserAccount(userId, dto.accountId);

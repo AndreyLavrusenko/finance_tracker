@@ -7,9 +7,6 @@ import {
 } from '@nestjs/swagger';
 import { AccountResponseDto } from '../responses/account-response.dto';
 
-const ApiValidationError = () =>
-    ApiResponse({ status: 400, description: 'Validation error' });
-
 const ApiUnauthorized = () =>
     ApiResponse({ status: 401, description: 'Unauthorized' });
 
